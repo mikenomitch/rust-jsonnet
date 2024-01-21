@@ -260,11 +260,11 @@ extern "C" fn import_callback<F>(
     success: &mut c_int,
 ) -> *mut c_char
 where
-    F: Fn(&JsonnetVm, &Path, &Path) -> Result<(PathBuf, String), String>,
+    F: FnMut(&JsonnetVm, &Path, &Path) -> Result<(PathBuf, String), String>,
 {
-    let ctx = unsafe { &*(ctx as *mut ImportContext<F>) };
+    let ctx = unsafe { &mut *(ctx as *mut ImportContext<F>) };
     let vm = ctx.vm;
-    let callback = &ctx.cb;
+    let callback = &mut ctx.cb;
     let base_path = Path::new(cstr2osstr(unsafe { CStr::from_ptr(base) }));
     let rel_path = Path::new(cstr2osstr(unsafe { CStr::from_ptr(rel) }));
     match callback(vm, base_path, rel_path) {
@@ -396,7 +396,7 @@ impl JsonnetVm {
     /// ```
     pub fn import_callback<F>(&mut self, cb: F)
     where
-        F: Fn(&JsonnetVm, &Path, &Path) -> Result<(PathBuf, String), String>,
+        F: FnMut(&JsonnetVm, &Path, &Path) -> Result<(PathBuf, String), String>,
     {
         let ctx = ImportContext { vm: self, cb: cb };
         unsafe {
